@@ -16,7 +16,7 @@ class StandController:
             return True
         try:
             self.ser = serial.Serial(
-                port='COM5',
+                port='COM3',
                 baudrate=115200,
                 bytesize=serial.EIGHTBITS,
                 parity=serial.PARITY_NONE,

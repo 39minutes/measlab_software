@@ -1,8 +1,12 @@
+from utils.stand_controller import StandController
 # lab5/controller_lab5.py
 from lab5 import calculations_lab5 as calc
 
 
 class Lab5Controller:
+    def __init__(self):
+        self.stand = StandController()
+
     def compute_k0(self, u_sat_p, u_sat_m, u1p, u1m):
         return calc.calc_k0(u_sat_p, u_sat_m, u1p, u1m)
 

@@ -7,6 +7,7 @@ from utils.tables.paste_table_widget import PasteTableWidget
 from utils.excel_timer_helper import update_timer_label, export_tables_to_excel
 from lab5.sub_base import Lab5SubBase
 from lab5.lab5_delegate import Lab5Delegate
+from utils.tables.read_voltage_button import ReadVoltageButton
 
 R4_ROWS    = [200, 100]
 COL_R4     = 0
@@ -34,6 +35,12 @@ class Sub133Window(Lab5SubBase):
         self._set_fixed(2, COL_UOUT, "—")
         self._set_fixed(2, COL_USM,  "")
 
+        self.read_uout_btn = ReadVoltageButton(
+            self.controller.stand,
+            self._set_current_uout_mv,
+            label_text="Uвых, В:"
+        )
+
         btn_save = QPushButton("Сохранить в Excel")
         btn_save.clicked.connect(
             lambda: export_tables_to_excel(self, {"Табл.5.5 Uсм": self.table})
@@ -48,6 +55,7 @@ class Sub133Window(Lab5SubBase):
             "<small>U<sub>см</sub> = U<sub>вых</sub> / (1 + R4/R1), R1 = 10 кОм</small>"
         ))
         layout.addWidget(self.table)
+        layout.addWidget(self.read_uout_btn)
         layout.addWidget(btn_save)
         layout.addStretch()
         layout.addWidget(self.timer_label)
@@ -72,3 +80,14 @@ class Sub133Window(Lab5SubBase):
                 usm_list.append(usm)
         if usm_list:
             self._set_calc(2, COL_USM, f"{sum(usm_list) / len(usm_list):.4f}")
+
+    def _set_current_uout_mv(self, value_v):
+        row = self.table.currentRow()
+        if row < 0:
+            row = 0
+        self.table.setItem(row, COL_UOUT, self._editable_item(f"{value_v * 1000:.2f}"))
+        self._safe_recalculate()
+
+    def _editable_item(self, text):
+        from PyQt6.QtWidgets import QTableWidgetItem
+        return QTableWidgetItem(str(text))

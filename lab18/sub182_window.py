@@ -12,6 +12,7 @@ from utils.tables.paste_table_widget import PasteTableWidget
 from utils.excel_timer_helper import update_timer_label, export_tables_to_excel
 from lab18.sub_base18 import Lab18SubBase
 from lab18.lab18_delegate import Lab18Delegate
+from utils.tables.read_voltage_button import ReadVoltageButton
 from lab18.calculations_lab18 import calc_uout_inv, calc_error_percent
 
 ROW_LABELS = ["R4 = 1 кОм", "R4 = 2 кОм", "R4 max", "R4 нас"]
@@ -61,6 +62,12 @@ class Sub182Window(Lab18SubBase):
         self.table.setVerticalHeaderLabels(ROW_LABELS)
         self.table.setItemDelegate(Lab18Delegate(self._safe_recalculate, self))
 
+        self.read_uout_btn = ReadVoltageButton(
+            self.stand,
+            self._set_current_uout,
+            label_text="Uвых, В:"
+        )
+
         for i, r4 in enumerate(R4_FIXED):
             self._set_fixed(i, COL_R4, str(r4))
         self._update_r4_labels()
@@ -82,6 +89,7 @@ class Sub182Window(Lab18SubBase):
         ))
         layout.addWidget(param_grp)
         layout.addWidget(self.table)
+        layout.addWidget(self.read_uout_btn)
         hl = QHBoxLayout()
         hl.addWidget(btn_plot)
         hl.addWidget(btn_save)
@@ -139,3 +147,14 @@ class Sub182Window(Lab18SubBase):
         ax.set_xlabel("R4, кОм"); ax.set_ylabel("Uвых, В")
         ax.set_title("18.2 — Инвертирующий сумматор: Uвых = f(R4)")
         ax.legend(); ax.grid(True); plt.tight_layout(); plt.show()
+
+    def _set_current_uout(self, value_v):
+        row = self.table.currentRow()
+        if row < 0:
+            row = 0
+        self.table.setItem(row, COL_UOUT_E, self._editable_item(f"{value_v:.4f}"))
+        self._safe_recalculate()
+
+    def _editable_item(self, text):
+        from PyQt6.QtWidgets import QTableWidgetItem
+        return QTableWidgetItem(str(text))

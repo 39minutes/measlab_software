@@ -1,33 +1,33 @@
 # lab16_17/sub1654_window.py
-# 16.5.4 — Исследование инвертирующего усилителя
-# Схема рис. 16.8. Таблица: Uвых = f(Uвх) при фиксированном R4.
-# График передаточной характеристики (как в 16.5.2, но для инвертирующего).
 from datetime import datetime
 import matplotlib.pyplot as plt
-import numpy as np
 
 from PyQt6.QtWidgets import (
-    QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QDoubleSpinBox, QGroupBox
+    QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 )
 from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QTableWidgetItem
 
 from utils.tables.paste_table_widget import PasteTableWidget
 from utils.excel_timer_helper import update_timer_label, export_tables_to_excel
 from lab16_17.sub_base1617 import Lab1617SubBase
 from lab16_17.lab1617_delegate import Lab1617Delegate
-from lab16_17.calculations_lab1617 import (
-    calc_ku_inv, calc_uout_inv, calc_error_percent, R1_DEFAULT
-)
+from utils.tables.read_voltage_button import ReadVoltageButton
+from lab16_17.calculations_lab1617 import calc_ku_inv
 
-# Uвх берём из таблицы 16.5.1 — 16 строк ±Uвх
-N_ROWS  = 16
-COL_UIN    = 0
-COL_UOUT_C = 1
-COL_UOUT_E = 2
-COL_KU_E   = 3
 
-HEADERS = ["Uвх, В", "Uвых расч, В", "Uвых эксп, В", "Ku эксп"]
+R4_VALUES = [1.0, 2.0, 4.7, 10.0, 20.0, 100.0]
+
+ROW_R4 = 0
+ROW_UOUT = 1
+ROW_KU_THEOR = 2
+ROW_KU_EXP = 3
+
+COL_LABEL = 0
+COL_DATA_START = 1
+
+N_ROWS = 4
+N_COLS = 7
 
 
 class Sub1654Window(Lab1617SubBase):
@@ -35,67 +35,56 @@ class Sub1654Window(Lab1617SubBase):
         super().__init__("lab1617_16.5.4", parent)
         self.start_time = datetime.now()
         self.setWindowTitle("16.5.4 — Инвертирующий усилитель")
-        self.resize(560, 560)
+        self.resize(820, 420)
 
-        # ── Параметры схемы (рис. 16.8) ──────────────────────────────────
-        param_grp = QGroupBox("Параметры схемы (рис. 16.8)")
-        p_hl = QHBoxLayout(param_grp)
-        p_hl.addWidget(QLabel("R4 ="))
-        self.r4_spin = QDoubleSpinBox()
-        self.r4_spin.setRange(0.1, 1000.0)
-        self.r4_spin.setDecimals(1)
-        self.r4_spin.setValue(100.0)
-        self.r4_spin.setToolTip("R4 схемы инвертирующего усилителя, кОм")
-        self.r4_spin.valueChanged.connect(self._on_param_changed)
-        p_hl.addWidget(self.r4_spin)
-        p_hl.addWidget(QLabel("кОм  |  R1 ="))
-        self.r1_spin = QDoubleSpinBox()
-        self.r1_spin.setRange(0.1, 200.0)
-        self.r1_spin.setDecimals(1)
-        self.r1_spin.setValue(R1_DEFAULT)
-        self.r1_spin.valueChanged.connect(self._on_param_changed)
-        p_hl.addWidget(self.r1_spin)
-        p_hl.addWidget(QLabel("кОм"))
-        self.ku_label = QLabel("   Ku расч = —")
-        p_hl.addWidget(self.ku_label)
-        p_hl.addStretch()
-
-        # ── Таблица ───────────────────────────────────────────────────────
-        self.table = PasteTableWidget(N_ROWS, len(HEADERS))
-        self.table.setHorizontalHeaderLabels(HEADERS)
+        self.table = PasteTableWidget(N_ROWS, N_COLS)
         self.table.setItemDelegate(Lab1617Delegate(self._safe_recalculate, self))
+        self.table.verticalHeader().setVisible(False)
+        self.table.horizontalHeader().setVisible(False)
+
+        self._init_table()
+
+        self.read_uout_btn = ReadVoltageButton(
+            self.stand,
+            self._set_current_uout,
+            label_text="Uвых, В:"
+        )
 
         note = QLabel(
-            "<small><b>Uвх</b> вводится из таблицы 16.5.1 (от −8 до +8 В и т.д.)."
-            " Uвых эксп — измеренное значение.</small>"
+            "<small>Таблица повторяет рисунок 1 в 1: по столбцам задаются значения "
+            "R4, в строку <b>Uвых, В</b> заносятся экспериментальные данные, "
+            "строки <b>Ku теор</b> и <b>Ku эксп</b> рассчитываются автоматически.</small>"
         )
         note.setWordWrap(True)
 
-        # ── Кнопки ────────────────────────────────────────────────────────
-        btn_plot = QPushButton("График передаточной характеристики")
+        btn_plot = QPushButton("График Uвых = f(R4)")
         btn_plot.clicked.connect(self._plot)
+
         btn_save = QPushButton("Сохранить в Excel")
         btn_save.clicked.connect(
             lambda: export_tables_to_excel(
                 self, {"Табл.16.5.4 ИнвУс": self.table}
             )
         )
+
         self.timer_label = QLabel()
         btn_exit = QPushButton("Закрыть")
         btn_exit.clicked.connect(self.close)
 
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(
-            "<b>16.5.4.</b> Инвертирующий усилитель — передаточная характеристика<br>"
-            "<small>Uвых расч = −(R4/R1)·Uвх,  схема рис. 16.8</small>"
+            "<b>Зависимость выходного напряжения от сопротивления обратной связи "
+            "неинвертирующего усилителя</b>"
         ))
-        layout.addWidget(param_grp)
         layout.addWidget(note)
         layout.addWidget(self.table)
+        layout.addWidget(self.read_uout_btn)
+
         hl = QHBoxLayout()
         hl.addWidget(btn_plot)
         hl.addWidget(btn_save)
         layout.addLayout(hl)
+
         layout.addStretch()
         layout.addWidget(self.timer_label)
         layout.addWidget(btn_exit)
@@ -104,61 +93,64 @@ class Sub1654Window(Lab1617SubBase):
         tmr.timeout.connect(lambda: update_timer_label(self.start_time, self.timer_label))
         tmr.start(1000)
         update_timer_label(self.start_time, self.timer_label)
-        self._load_session()
 
-    def _on_param_changed(self):
-        r4 = self.r4_spin.value()
-        r1 = self.r1_spin.value()
-        ku = calc_ku_inv(r4, r1)
-        self.ku_label.setText(f"   Ku расч = {ku:.3f}")
+        self._load_session()
         self._safe_recalculate()
 
-    # ── Пересчёт ──────────────────────────────────────────────────────────
-    def _do_recalculate(self):
-        r4 = self.r4_spin.value()
-        r1 = self.r1_spin.value()
-        ku = calc_ku_inv(r4, r1)
-        self.ku_label.setText(f"   Ku расч = {ku:.3f}")
-        for row in range(N_ROWS):
-            uin  = self._get_float(row, COL_UIN)
-            uexp = self._get_float(row, COL_UOUT_E)
-            if uin is None:
-                continue
-            ucalc = calc_uout_inv(uin, r4, r1)
-            self._set_calc(row, COL_UOUT_C, f"{ucalc:.4f}")
-            if uexp is not None:
-                self._set_calc(
-                    row, COL_KU_E,
-                    "X" if uin == 0 else f"{uexp / uin:.4f}"
-                )
+    def _init_table(self):
+        self._set_fixed(ROW_R4, COL_LABEL, "R4, кОм")
+        self._set_fixed(ROW_UOUT, COL_LABEL, "Uвых, В")
+        self._set_fixed(ROW_KU_THEOR, COL_LABEL, "Ku теор")
+        self._set_fixed(ROW_KU_EXP, COL_LABEL, "Ku эксп")
 
-    # ── График ────────────────────────────────────────────────────────────
+        for i, r4 in enumerate(R4_VALUES, start=COL_DATA_START):
+            self._set_fixed(ROW_R4, i, self._format_r4(r4))
+
+    def _format_r4(self, value):
+        if abs(value - round(value)) < 1e-9:
+            return str(int(round(value)))
+        return str(value).replace(".", ",")
+
+    def _do_recalculate(self):
+        for i, r4 in enumerate(R4_VALUES, start=COL_DATA_START):
+            ku_theor = calc_ku_inv(r4, 1.0)
+            self._set_calc(ROW_KU_THEOR, i, f"{abs(ku_theor):.4f}")
+
+            uout = self._get_float(ROW_UOUT, i)
+            if uout is not None:
+                self._set_calc(ROW_KU_EXP, i, f"{abs(uout):.4f}")
+            else:
+                self._set_calc(ROW_KU_EXP, i, "")
+
     def _plot(self):
-        pts_c = []
-        pts_e = []
-        for row in range(N_ROWS):
-            uin   = self._get_float(row, COL_UIN)
-            ucalc = self._get_float(row, COL_UOUT_C)
-            uexp  = self._get_float(row, COL_UOUT_E)
-            if uin is not None:
-                if ucalc is not None: pts_c.append((uin, ucalc))
-                if uexp  is not None: pts_e.append((uin, uexp))
-        if not pts_c and not pts_e:
+        r4_vals = []
+        uout_vals = []
+
+        for i, r4 in enumerate(R4_VALUES, start=COL_DATA_START):
+            uout = self._get_float(ROW_UOUT, i)
+            if uout is not None:
+                r4_vals.append(r4)
+                uout_vals.append(uout)
+
+        if not r4_vals:
             return
-        r4 = self.r4_spin.value()
-        r1 = self.r1_spin.value()
+
         fig, ax = plt.subplots(figsize=(9, 5))
-        if pts_c:
-            pts_c.sort(); xs, ys = zip(*pts_c)
-            ax.plot(xs, ys, "b-", label=f"Uвых расч (Ku={calc_ku_inv(r4,r1):.2f})")
-        if pts_e:
-            pts_e.sort(); xs, ys = zip(*pts_e)
-            ax.plot(xs, ys, "ro--", label="Uвых эксп")
-        ax.axvline(0, color="k", linewidth=0.5)
-        ax.axhline(0, color="k", linewidth=0.5)
-        ax.set_xlabel("Uвх, В"); ax.set_ylabel("Uвых, В")
-        ax.set_title(
-            f"16.5.4 — Передаточная хар-ка инв. усилителя "
-            f"(R4={r4} кОм, R1={r1} кОм)"
-        )
-        ax.legend(); ax.grid(True); plt.tight_layout(); plt.show()
+        ax.plot(r4_vals, uout_vals, "bo-", label="Uвых эксп")
+        ax.set_xlabel("R4, кОм")
+        ax.set_ylabel("Uвых, В")
+        ax.set_title("Зависимость выходного напряжения от сопротивления обратной связи")
+        ax.grid(True)
+        ax.legend()
+        plt.tight_layout()
+        plt.show()
+
+    def _set_current_uout(self, value_v):
+        col = self.table.currentColumn()
+        if col < COL_DATA_START:
+            col = COL_DATA_START
+        self.table.setItem(ROW_UOUT, col, self._editable_item(f"{value_v:.4f}"))
+        self._safe_recalculate()
+
+    def _editable_item(self, text):
+        return QTableWidgetItem(str(text))

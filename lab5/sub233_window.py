@@ -9,6 +9,7 @@ from utils.tables.paste_table_widget import PasteTableWidget
 from utils.excel_timer_helper import update_timer_label, export_tables_to_excel
 from lab5.sub_base import Lab5SubBase
 from lab5.lab5_delegate import Lab5Delegate
+from utils.tables.read_voltage_button import ReadVoltageButton
 from lab5.const_lab5 import UIN_REPEATER
 from lab5.calculations_lab5 import calc_ku_exp
 
@@ -28,6 +29,12 @@ class Sub233Window(Lab5SubBase):
         self.table = PasteTableWidget(len(UIN_REPEATER), len(HEADERS))
         self.table.setHorizontalHeaderLabels(HEADERS)
         self.table.setItemDelegate(Lab5Delegate(self._safe_recalculate, self))
+
+        self.read_uout_btn = ReadVoltageButton(
+            self.controller.stand,
+            self._set_current_uout,
+            label_text="Uвых, В:"
+        )
 
         for i, uin in enumerate(UIN_REPEATER):
             self._set_fixed(i, COL_UIN, str(uin))
@@ -50,6 +57,7 @@ class Sub233Window(Lab5SubBase):
             "<small>Теор.: K<sub>u</sub> = 1 (U<sub>вых</sub> = U<sub>вх</sub>)</small>"
         ))
         layout.addWidget(self.table)
+        layout.addWidget(self.read_uout_btn)
         hl = QHBoxLayout()
         hl.addWidget(btn_graph)
         hl.addWidget(btn_save)
@@ -92,3 +100,14 @@ class Sub233Window(Lab5SubBase):
         plt.xlabel("Uвх, В"); plt.ylabel("Uвых, В")
         plt.title("Передаточная характеристика повторителя напряжения")
         plt.legend(); plt.grid(True); plt.tight_layout(); plt.show()
+
+    def _set_current_uout(self, value_v):
+        row = self.table.currentRow()
+        if row < 0:
+            row = 0
+        self.table.setItem(row, COL_UOUT, self._editable_item(f"{value_v:.4f}"))
+        self._safe_recalculate()
+
+    def _editable_item(self, text):
+        from PyQt6.QtWidgets import QTableWidgetItem
+        return QTableWidgetItem(str(text))

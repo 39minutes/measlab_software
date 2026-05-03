@@ -3,6 +3,7 @@ import traceback
 from PyQt6.QtWidgets import QWidget, QTableWidgetItem
 from PyQt6.QtCore import Qt, QTimer
 import utils.session_store as ss
+from utils.stand_controller import StandController
 
 
 class Lab18SubBase(QWidget):
@@ -10,6 +11,7 @@ class Lab18SubBase(QWidget):
         super().__init__(parent)
         self._session_key = session_key
         self._updating    = False
+        self.stand = StandController()
 
     def _set_fixed(self, row: int, col: int, text: str):
         item = QTableWidgetItem(str(text))

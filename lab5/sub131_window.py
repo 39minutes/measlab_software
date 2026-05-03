@@ -4,6 +4,7 @@ from PyQt6.QtCore import QTimer
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
+
 from utils.tables.paste_table_widget import PasteTableWidget
 from utils.excel_timer_helper import update_timer_label, export_tables_to_excel
 from lab5.sub_base import Lab5SubBase

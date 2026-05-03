@@ -9,6 +9,7 @@ from utils.excel_timer_helper import update_timer_label, export_tables_to_excel
 from lab5.sub_base import Lab5SubBase
 from lab5.lab5_delegate import Lab5Delegate
 from lab5.const_lab5 import RN_VALUES_KOHM, RN_LABELS
+from utils.tables.read_voltage_button import ReadVoltageButton
 
 COL_RN = 0
 COL_UP = 1
@@ -32,6 +33,17 @@ class Sub132Window(Lab5SubBase):
         for i, lbl in enumerate(RN_LABELS):
             self._set_fixed(i, COL_RN, lbl)
 
+        self.read_uplus_btn = ReadVoltageButton(
+            self.controller.stand,
+            lambda value: self._fill_selected(COL_UP, value),
+            label_text="Uвых+, В:"
+        )
+        self.read_uminus_btn = ReadVoltageButton(
+            self.controller.stand,
+            lambda value: self._fill_selected(COL_UM, -abs(value)),
+            label_text="Uвых-, В:"
+        )
+
         btn_graph = QPushButton("График  Uвых = F(Iвых)")
         btn_graph.clicked.connect(self._plot)
         btn_save = QPushButton("Сохранить в Excel")
@@ -48,6 +60,8 @@ class Sub132Window(Lab5SubBase):
             "<small>I<sub>вых</sub> (мА) = |U<sub>вых</sub>| / R<sub>н</sub> — рассчитывается автоматически</small>"
         ))
         layout.addWidget(self.table)
+        layout.addWidget(self.read_uplus_btn)
+        layout.addWidget(self.read_uminus_btn)
         hl = QHBoxLayout()
         hl.addWidget(btn_graph)
         hl.addWidget(btn_save)
@@ -93,3 +107,14 @@ class Sub132Window(Lab5SubBase):
         plt.title("Зависимость Umax(вых) от тока Iвых")
         plt.axhline(0, color="k", linewidth=0.5)
         plt.legend(); plt.grid(True); plt.tight_layout(); plt.show()
+
+    def _fill_selected(self, col, value):
+        row = self.table.currentRow()
+        if row < 0:
+            row = 0
+        self.table.setItem(row, col, self._editable_item(f"{value:.4f}"))
+        self._safe_recalculate()
+
+    def _editable_item(self, text):
+        from PyQt6.QtWidgets import QTableWidgetItem
+        return QTableWidgetItem(str(text))

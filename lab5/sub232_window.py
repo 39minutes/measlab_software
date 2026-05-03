@@ -11,6 +11,7 @@ from utils.tables.paste_table_widget import PasteTableWidget
 from utils.excel_timer_helper import update_timer_label, export_tables_to_excel
 from lab5.sub_base import Lab5SubBase
 from lab5.lab5_delegate import Lab5Delegate
+from utils.tables.read_voltage_button import ReadVoltageButton
 from lab5.calculations_lab5 import calc_ku_theor_nu
 
 COL_UIN    = 0
@@ -31,6 +32,12 @@ class Sub232Window(Lab5SubBase):
         self.table = PasteTableWidget(N_ROWS, len(HEADERS))
         self.table.setHorizontalHeaderLabels(HEADERS)
         self.table.setItemDelegate(Lab5Delegate(self._safe_recalculate, self))
+
+        self.read_uout_btn = ReadVoltageButton(
+            self.controller.stand,
+            self._set_current_uout,
+            label_text="Uвых, В:"
+        )
 
         r4_hl = QHBoxLayout()
         r4_hl.addWidget(QLabel("R4 (из варианта), кОм:"))
@@ -61,6 +68,7 @@ class Sub232Window(Lab5SubBase):
         ))
         layout.addLayout(r4_hl)
         layout.addWidget(self.table)
+        layout.addWidget(self.read_uout_btn)
         hl = QHBoxLayout()
         hl.addWidget(btn_graph)
         hl.addWidget(btn_save)
@@ -115,3 +123,14 @@ class Sub232Window(Lab5SubBase):
         plt.xlabel("Uвх, В"); plt.ylabel("Uвых, В")
         plt.title(f"Передаточная характеристика НУ (R4 = {r4} кОм)")
         plt.legend(); plt.grid(True); plt.tight_layout(); plt.show()
+
+    def _set_current_uout(self, value_v):
+        row = self.table.currentRow()
+        if row < 0:
+            row = 0
+        self.table.setItem(row, COL_UOUT_E, self._editable_item(f"{value_v:.4f}"))
+        self._safe_recalculate()
+
+    def _editable_item(self, text):
+        from PyQt6.QtWidgets import QTableWidgetItem
+        return QTableWidgetItem(str(text))
