@@ -36,9 +36,9 @@ class Lab1617Window(QWidget):
         grp = QGroupBox("Разделы лабораторной работы")
         g   = QVBoxLayout(grp)
         g.addWidget(self._btn(
-            "16.5.3  Дифференциальный усилитель", "1653"))
+            "Исследование дифференциального усилителя", "1653"))
         g.addWidget(self._btn(
-            "16.5.4  Инвертирующий усилитель", "1654"))
+            "Исследование инвертирующего усилителя", "1654"))
 
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)

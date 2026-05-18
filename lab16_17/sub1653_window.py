@@ -16,17 +16,18 @@ from lab16_17.calculations_lab1617 import calc_ku_diff, calc_uout_diff, R1_DEFAU
 
 
 R4_VALUES = [1.0, 2.0, 4.7, 10.0, 20.0, 100.0]
-U2_FIXED = 0.5
 
-ROW_UOUT_E = 0
-ROW_KU_THEOR = 1
-ROW_KU_EXP = 2
+# Строки таблицы
+ROW_UOUT_EXP = 0    # Uвых.э, В
+ROW_KU_EXP   = 1    # Ки.э
+ROW_KU_THEOR = 2    # Ки.т
+ROW_UOUT_THEOR = 3  # Uвых.т, В
 
-N_ROWS = 3
+N_ROWS = 4
 N_COLS = len(R4_VALUES)
 
 H_HEADERS = ["1", "2", "4,7", "10", "20", "100"]
-V_HEADERS = ["Uвых, В", "Ku теор", "Ku эксп"]
+V_HEADERS = ["Uвых.э, В", "Ки.э", "Ки.т", "Uвых.т, В"]
 
 
 class Sub1653Window(Lab1617SubBase):
@@ -34,8 +35,9 @@ class Sub1653Window(Lab1617SubBase):
         super().__init__("lab1617_16.5.3", parent)
         self.start_time = datetime.now()
         self.setWindowTitle("16.5.3 — Дифференциальный усилитель")
-        self.resize(860, 420)
+        self.resize(920, 480)
 
+        # Параметры схемы
         param_grp = QGroupBox("Параметры схемы (рис. 16.7)")
         p_hl = QHBoxLayout(param_grp)
 
@@ -50,15 +52,24 @@ class Sub1653Window(Lab1617SubBase):
         p_hl.addWidget(QLabel("кОм   |   U1 ="))
         self.u1_spin = QDoubleSpinBox()
         self.u1_spin.setRange(-20.0, 20.0)
-        self.u1_spin.setDecimals(4)
+        self.u1_spin.setDecimals(3)
         self.u1_spin.setSingleStep(0.1)
         self.u1_spin.setValue(0.0)
         self.u1_spin.valueChanged.connect(self._safe_recalculate)
         p_hl.addWidget(self.u1_spin)
 
-        p_hl.addWidget(QLabel("В   |   U2 = 0.5 В"))
+        p_hl.addWidget(QLabel("В   |   U2 ="))
+        self.u2_spin = QDoubleSpinBox()
+        self.u2_spin.setRange(-20.0, 20.0)
+        self.u2_spin.setDecimals(3)
+        self.u2_spin.setSingleStep(0.1)
+        self.u2_spin.setValue(0.5)
+        self.u2_spin.valueChanged.connect(self._safe_recalculate)
+        p_hl.addWidget(self.u2_spin)
+        p_hl.addWidget(QLabel("В"))
         p_hl.addStretch()
 
+        # Таблица
         self.table = PasteTableWidget(N_ROWS, N_COLS)
         self.table.setHorizontalHeaderLabels(H_HEADERS)
         self.table.setVerticalHeaderLabels(V_HEADERS)
@@ -70,9 +81,9 @@ class Sub1653Window(Lab1617SubBase):
         )
 
         note = QLabel(
-            "<small>Столбцы таблицы соответствуют значениям R4, кОм. "
-            "В строку <b>Uвых, В</b> заносятся экспериментальные значения. "
-            "<b>Ku теор</b> и <b>Ku эксп</b> рассчитываются автоматически.</small>"
+            "<small>Столбцы соответствуют R4 = R5, кОм.<br>"
+            "<b>Uвых.э</b> — заносится экспериментально.<br>"
+            "<b>Ки.т</b> и <b>Uвых.т</b> рассчитываются автоматически.</small>"
         )
         note.setWordWrap(True)
 
@@ -93,9 +104,9 @@ class Sub1653Window(Lab1617SubBase):
 
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(
-            "<b>Таблица 16.4.</b> Дифференциальный усилитель"
+            "<b>Зависимость выходного напряжения от сопротивления обратной связи "
+            "дифференциального усилителя</b>"
         ))
-        layout.addWidget(QLabel("<small><b>Столбцы: R4, кОм</b></small>"))
         layout.addWidget(param_grp)
         layout.addWidget(note)
         layout.addWidget(self.table)
@@ -122,79 +133,71 @@ class Sub1653Window(Lab1617SubBase):
     def _do_recalculate(self):
         r1 = self.r1_spin.value()
         u1 = self.u1_spin.value()
+        u2 = self.u2_spin.value()
+        denom = u2 - u1
 
         for col, r4 in enumerate(R4_VALUES):
+            # Ku теоретический
             ku_theor = calc_ku_diff(r4, r1)
-            self._set_calc(ROW_KU_THEOR, col, f"{ku_theor:.4f}")
+            self._set_calc(ROW_KU_THEOR, col, ku_theor)
 
-            uout_exp = self._get_float(ROW_UOUT_E, col)
-            if uout_exp is not None:
-                denom = U2_FIXED - u1
-                if denom != 0:
-                    self._set_calc(ROW_KU_EXP, col, f"{uout_exp / denom:.4f}")
-                else:
-                    self._set_calc(ROW_KU_EXP, col, "X")
+            # Uвых теоретический
+            uout_theor = calc_uout_diff(u1, u2, r4, r1)
+            self._set_calc(ROW_UOUT_THEOR, col, uout_theor)
+
+            # Ku экспериментальный
+            uout_exp = self._get_float(ROW_UOUT_EXP, col)
+            if uout_exp is not None and abs(denom) > 0.0001:
+                ku_exp = uout_exp / denom
+                self._set_calc(ROW_KU_EXP, col, ku_exp)
             else:
                 self._set_calc(ROW_KU_EXP, col, "")
 
     def _plot_uout(self):
-        r4_vals = []
-        u_exp_vals = []
-        u_calc_vals = []
+        r4_vals = R4_VALUES[:]
+        u_calc = [calc_uout_diff(self.u1_spin.value(), self.u2_spin.value(), r4, self.r1_spin.value())
+                  for r4 in R4_VALUES]
+        u_exp = []
 
-        r1 = self.r1_spin.value()
-        u1 = self.u1_spin.value()
-
-        for col, r4 in enumerate(R4_VALUES):
-            r4_vals.append(r4)
-            u_calc_vals.append(calc_uout_diff(u1, U2_FIXED, r4, r1))
-
-            u_exp = self._get_float(ROW_UOUT_E, col)
-            if u_exp is not None:
-                u_exp_vals.append((r4, u_exp))
+        for col in range(N_COLS):
+            val = self._get_float(ROW_UOUT_EXP, col)
+            if val is not None:
+                u_exp.append(val)
 
         fig, ax = plt.subplots(figsize=(9, 5))
-        ax.plot(r4_vals, u_calc_vals, "b-o", label="Uвых расч")
+        ax.plot(r4_vals, u_calc, "b-o", label="Uвых.т")
+        if len(u_exp) == len(r4_vals):
+            ax.plot(r4_vals, u_exp, "rs--", label="Uвых.э")
 
-        if u_exp_vals:
-            xs, ys = zip(*u_exp_vals)
-            ax.plot(xs, ys, "rs--", label="Uвых эксп")
-
-        ax.axhline(0, color="k", linewidth=0.5)
-        ax.set_xlabel("R4, кОм")
+        ax.set_xlabel("R4 = R5, кОм")
         ax.set_ylabel("Uвых, В")
-        ax.set_title("16.5.3 — Дифференциальный усилитель: Uвых = f(R4)")
+        ax.set_title("Зависимость выходного напряжения от R4")
         ax.legend()
         ax.grid(True)
         plt.tight_layout()
         plt.show()
 
     def _plot_ku(self):
-        r4_vals = []
-        ku_theor_vals = []
-        ku_exp_vals = []
+        r4_vals = R4_VALUES[:]
+        ku_theor = []
+        ku_exp = []
 
-        u1 = self.u1_spin.value()
-        denom = U2_FIXED - u1
-
-        for col, r4 in enumerate(R4_VALUES):
-            r4_vals.append(r4)
-            ku_theor_vals.append(self._get_float(ROW_KU_THEOR, col) or 0.0)
-
-            u_exp = self._get_float(ROW_UOUT_E, col)
-            if u_exp is not None and denom != 0:
-                ku_exp_vals.append((r4, u_exp / denom))
+        for col in range(N_COLS):
+            ku_theor.append(self._get_float(ROW_KU_THEOR, col) or 0.0)
+            uout_exp = self._get_float(ROW_UOUT_EXP, col)
+            if uout_exp is not None:
+                denom = self.u2_spin.value() - self.u1_spin.value()
+                if abs(denom) > 0.0001:
+                    ku_exp.append(uout_exp / denom)
 
         fig, ax = plt.subplots(figsize=(9, 5))
-        ax.plot(r4_vals, ku_theor_vals, "b-o", label="Ku теор")
+        ax.plot(r4_vals, ku_theor, "b-o", label="Ки.т")
+        if len(ku_exp) == len(r4_vals):
+            ax.plot(r4_vals, ku_exp, "rs--", label="Ки.э")
 
-        if ku_exp_vals:
-            xs, ys = zip(*ku_exp_vals)
-            ax.plot(xs, ys, "rs--", label="Ku эксп")
-
-        ax.set_xlabel("R4, кОм")
+        ax.set_xlabel("R4 = R5, кОм")
         ax.set_ylabel("Ku")
-        ax.set_title("16.5.3 — Дифференциальный усилитель: Ku = f(R4)")
+        ax.set_title("Зависимость коэффициента усиления от R4")
         ax.legend()
         ax.grid(True)
         plt.tight_layout()
@@ -204,8 +207,13 @@ class Sub1653Window(Lab1617SubBase):
         col = self.table.currentColumn()
         if col < 0:
             col = 0
-        self.table.setItem(ROW_UOUT_E, col, self._editable_item(f"{value_v:.4f}"))
+        self.table.setItem(ROW_UOUT_EXP, col, self._editable_item(value_v))
         self._safe_recalculate()
 
     def _editable_item(self, text):
-        return QTableWidgetItem(str(text))
+        """Округление до сотых"""
+        try:
+            num = float(text)
+            return QTableWidgetItem(f"{num:.2f}")
+        except (ValueError, TypeError):
+            return QTableWidgetItem(str(text))

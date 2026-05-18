@@ -19,7 +19,7 @@ COL_UOUT_E = 1
 COL_UOUT_T = 2
 COL_KU     = 3
 HEADERS    = ["Uвх, В", "Uвых.эксп, В", "Uвых.расч, В", "Ku.э"]
-N_ROWS     = 16
+N_ROWS     = 13
 
 
 class Sub232Window(Lab5SubBase):
@@ -97,7 +97,7 @@ class Sub232Window(Lab5SubBase):
                 u_th, ku_exp = self.controller.compute_transfer_nu_row(
                     uin, uout if uout is not None else 0.0, r4
                 )
-                self._set_calc(row, COL_UOUT_T, f"{u_th:.4f}")
+                self._set_calc(row, COL_UOUT_T, f"{u_th * 10:.4f}")
                 if uout is not None:
                     self._set_calc(row, COL_KU,
                                    "X" if uin == 0 else f"{ku_exp:.4f}")

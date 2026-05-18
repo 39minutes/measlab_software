@@ -29,7 +29,7 @@ class StandController:
 
     def get_voltage_current(self):
         if not self._ensure_connection():
-            raise RuntimeError(f"Не удалось подключиться к COM-порту {'COM5'}")
+            raise RuntimeError(f"Не удалось подключиться к лабораторному стенду")
 
         try:
             # Запрос Uвых и Iвых
@@ -63,7 +63,6 @@ class StandController:
 
     def send_bytes(self, data: bytes):
         if not self._ensure_connection():
-            raise RuntimeError(f"Не удалось подключиться к COM-порту {'COM5'}")
-
+            raise RuntimeError(f"Не удалось подключиться к COM-порту {'COM3'}")
         self.ser.write(data)
         self.ser.read(32)

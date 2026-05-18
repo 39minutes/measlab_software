@@ -9,15 +9,6 @@ import utils.session_store as ss
 class Lab5SubBase(QWidget):
     """
     Базовый класс всех подокон Лаб. 5.
-
-    Решение проблемы 0xC0000409:
-      Пересчёт запускается только из Lab5Delegate.setModelData через
-      QTimer.singleShot(0) — itemChanged не подключается вообще.
-
-    Персистентность данных:
-      _load_session()  — вызывается в конце __init__ каждого подокна,
-                         загружает таблицу из session_data.json.
-      closeEvent()     — автоматически сохраняет таблицу в JSON при закрытии.
     """
 
     def __init__(self, session_key: str, controller, parent=None):
@@ -26,15 +17,31 @@ class Lab5SubBase(QWidget):
         self.controller   = controller
         self._updating    = False
 
+    # ── Форматирование чисел ─────────────────────────────────────────────
+
+    def _format_number(self, value, decimals: int = 2) -> str:
+        """Форматирует число до указанного количества знаков после запятой"""
+        if value is None:
+            return ""
+        try:
+            return f"{float(value):.{decimals}f}"
+        except (ValueError, TypeError):
+            return str(value)
+
     # ── Утилиты таблицы ───────────────────────────────────────────────────
 
-    def _set_fixed(self, row: int, col: int, text: str):
-        item = QTableWidgetItem(str(text))
+    def _set_fixed(self, row: int, col: int, value):
+        """Устанавливает фиксированное значение с округлением до сотых"""
+        text = self._format_number(value, decimals=2)
+        item = QTableWidgetItem(text)
         item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
         self.table.setItem(row, col, item)
 
-    def _set_calc(self, row: int, col: int, text: str):
-        self._set_fixed(row, col, text)
+    def _set_calc(self, row: int, col: int, value):
+        """Устанавливает рассчитанное значение с округлением до сотых"""
+        text = self._format_number(value, decimals=2)
+        item = QTableWidgetItem(text)
+        self.table.setItem(row, col, item)
 
     def _get_float(self, row: int, col: int):
         item = self.table.item(row, col)

@@ -41,7 +41,7 @@ class Lab5SummaryWindow(QWidget):
     def __init__(self, controller, parent=None):
         super().__init__(parent)
         self.controller = controller
-        self.setWindowTitle("Лаб. №5 — Все данные")
+        self.setWindowTitle("Лабораторная работа")
 
         self.tabs = QTabWidget()
         self.sub_windows: list[QWidget] = []
@@ -60,7 +60,7 @@ class Lab5SummaryWindow(QWidget):
         btn_close.clicked.connect(self.close)
 
         header = QLabel(
-            "<b>Лабораторная работа №5 — Все данные</b>"
+            "<b>Лабораторная работа</b>"
         )
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header.setStyleSheet("font-size: 13px; padding: 6px;")
