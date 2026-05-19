@@ -33,7 +33,7 @@ class Sub182Window(Lab18SubBase):
     def __init__(self, parent=None):
         super().__init__("lab18_18.2", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("18.2 — Инвертирующий сумматор")
+        self.setWindowTitle("Инвертирующий сумматор")
         self.resize(920, 460)
 
         # Параметры сверху

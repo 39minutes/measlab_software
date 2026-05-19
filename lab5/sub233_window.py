@@ -11,7 +11,7 @@ from lab5.sub_base import Lab5SubBase
 from lab5.lab5_delegate import Lab5Delegate
 from utils.tables.read_voltage_button import ReadVoltageButton
 from lab5.const_lab5 import UIN_REPEATER
-from lab5.calculations_lab5 import calc_ku_exp
+from lab5 import calculations_lab5 as calc
 
 COL_UIN  = 0
 COL_UOUT = 1
@@ -20,10 +20,10 @@ HEADERS  = ["Uвх, В", "Uвых.э, В", "Ku.э"]
 
 
 class Sub233Window(Lab5SubBase):
-    def __init__(self, controller, parent=None):
-        super().__init__("lab5_2.3.3", controller, parent)
+    def __init__(self, parent=None):
+        super().__init__("lab5_2.3.3", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("2.3.3 — Передаточная характеристика повторителя")
+        self.setWindowTitle("Передаточная характеристика повторителя напряжения")
         self.resize(400, 300)
 
         self.table = PasteTableWidget(len(UIN_REPEATER), len(HEADERS))
@@ -31,7 +31,7 @@ class Sub233Window(Lab5SubBase):
         self.table.setItemDelegate(Lab5Delegate(self._safe_recalculate, self))
 
         self.read_uout_btn = ReadVoltageButton(
-            self.controller.stand,
+            self.stand,
             self._set_current_uout,
             label_text="Uвых, В:"
         )
@@ -81,25 +81,30 @@ class Sub233Window(Lab5SubBase):
                 continue
             uout = self._get_float(i, COL_UOUT)
             if uout is not None:
-                self._set_calc(i, COL_KU, f"{calc_ku_exp(uout, uin):.4f}")
+                self._set_calc(i, COL_KU, f"{calc.calc_ku_exp(uout, uin):.4f}")
 
     def _plot(self):
         uin_pts, uout_pts = [], []
         for i, uin in enumerate(UIN_REPEATER):
             uout = self._get_float(i, COL_UOUT)
             if uout is not None:
-                uin_pts.append(uin); uout_pts.append(uout)
+                uin_pts.append(uin)
+                uout_pts.append(uout)
         if not uin_pts:
             return
         u_arr = np.array(uin_pts)
         plt.figure(figsize=(8, 5))
         plt.plot(u_arr, uout_pts, "bo-", label="Экспериментальная")
-        plt.plot(u_arr, u_arr,    "r--", label="Идеальная (Ku = 1)")
+        plt.plot(u_arr, u_arr, "r--", label="Идеальная (Ku = 1)")
         plt.axvline(0, color="k", linewidth=0.5)
         plt.axhline(0, color="k", linewidth=0.5)
-        plt.xlabel("Uвх, В"); plt.ylabel("Uвых, В")
+        plt.xlabel("Uвх, В")
+        plt.ylabel("Uвых, В")
         plt.title("Передаточная характеристика повторителя напряжения")
-        plt.legend(); plt.grid(True); plt.tight_layout(); plt.show()
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
 
     def _set_current_uout(self, value_v):
         row = self.table.currentRow()

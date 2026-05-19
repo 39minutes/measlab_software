@@ -1,5 +1,6 @@
 # lab16_17/lab1617_window.py
 from datetime import datetime
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QGroupBox, QFrame
@@ -9,15 +10,16 @@ from PyQt6.QtGui import QFont
 
 from utils.excel_timer_helper import update_timer_label
 from utils.export_all_to_excel import export_lab_to_excel
+
+# Остался только один sub-окно
 from lab16_17.sub1653_window import Sub1653Window
-from lab16_17.sub1654_window import Sub1654Window
 
 _LAB_PREFIX = "lab1617_"
-_LAB_TITLE  = "Лаб. 16, 17 — Усилители на ОУ"
+_LAB_TITLE  = "Исследование дифференциального операционного усилителя"
 
 _SUB_CLASSES = {
     "1653": Sub1653Window,
-    "1654": Sub1654Window,
+    # 1654 полностью удалён
 }
 
 
@@ -25,7 +27,7 @@ class Lab1617Window(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(_LAB_TITLE)
-        self.resize(460, 280)
+        self.resize(460, 220)          # окно стало меньше
         self.start_time = datetime.now()
         self._subs: dict[str, QWidget] = {}
 
@@ -34,11 +36,11 @@ class Lab1617Window(QWidget):
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         grp = QGroupBox("Разделы лабораторной работы")
-        g   = QVBoxLayout(grp)
+        g = QVBoxLayout(grp)
         g.addWidget(self._btn(
             "Исследование дифференциального усилителя", "1653"))
-        g.addWidget(self._btn(
-            "Исследование инвертирующего усилителя", "1654"))
+
+        # Кнопка 16.5.4 удалена
 
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
@@ -91,4 +93,6 @@ class Lab1617Window(QWidget):
                 self._subs[key] = cls()
         w = self._subs.get(key)
         if w:
-            w.show(); w.raise_(); w.activateWindow()
+            w.show()
+            w.raise_()
+            w.activateWindow()

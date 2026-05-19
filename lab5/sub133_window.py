@@ -1,3 +1,4 @@
+# lab5/sub133_window.py
 from PyQt6.QtWidgets import QVBoxLayout, QLabel, QPushButton, QTableWidgetItem
 from PyQt6.QtCore import QTimer, Qt
 from datetime import datetime
@@ -6,6 +7,8 @@ from utils.tables.paste_table_widget import PasteTableWidget
 from utils.excel_timer_helper import update_timer_label, export_tables_to_excel
 from lab5.sub_base import Lab5SubBase
 from lab5.lab5_delegate import Lab5Delegate
+from utils.tables.read_voltage_button import ReadVoltageButton   # ← добавлено
+
 
 R4_ROWS      = [200, 100]
 COL_R4       = 0
@@ -17,11 +20,11 @@ HEADERS = ["R4, кОм", "Uвых, мВ", "Uсм, мВ", "Uсм ср, мВ"]
 
 
 class Sub133Window(Lab5SubBase):
-    def __init__(self, controller, parent=None):
-        super().__init__("lab5_1.3.3", controller, parent)
+    def __init__(self, parent=None):
+        super().__init__("lab5_1.3.3", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("1.3.3 — Измерение напряжения смещения ОУ")
-        self.resize(560, 220)
+        self.setWindowTitle("1.3.3 — Измерение значения напряжения смещения ОУ")
+        self.resize(620, 280)
 
         self.table = PasteTableWidget(2, len(HEADERS))
         self.table.setHorizontalHeaderLabels(HEADERS)
@@ -39,6 +42,13 @@ class Sub133Window(Lab5SubBase):
         avg_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.setItem(0, COL_USM_AVG, avg_item)
 
+        # Кнопка считывания Uвых со стенда (возвращена)
+        self.read_uout_btn = ReadVoltageButton(
+            self.stand,
+            self._fill_selected_uout,
+            label_text="Uвых, мВ:"
+        )
+
         btn_save = QPushButton("Сохранить в Excel")
         btn_save.clicked.connect(
             lambda: export_tables_to_excel(self, {"Табл.5.5 Uсм": self.table})
@@ -51,10 +61,11 @@ class Sub133Window(Lab5SubBase):
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(
             "<b>Таблица 5.5.</b> Напряжение смещения ОУ<br>"
-            "<small>Значения U<sub>вых</sub> и U<sub>см</sub> вводятся вручную; "
-            "в последнем столбце вычисляется среднее значение U<sub>см</sub></small>"
+            "<small>U<sub>вых</sub> можно считывать кнопкой со стенда или вводить вручную.<br>"
+            "U<sub>см</sub> вводится вручную. В последнем столбце — среднее значение U<sub>см</sub></small>"
         ))
         layout.addWidget(self.table)
+        layout.addWidget(self.read_uout_btn)          # ← кнопка возвращена
         layout.addWidget(btn_save)
         layout.addStretch()
         layout.addWidget(self.timer_label)
@@ -68,6 +79,18 @@ class Sub133Window(Lab5SubBase):
         update_timer_label(self.start_time, self.timer_label)
 
         self._load_session()
+
+    def _fill_selected_uout(self, value):
+        """Заполняет выбранную ячейку в колонке Uвых (переводим в мВ)"""
+        row = self.table.currentRow()
+        if row < 0:
+            row = 0
+        self.table.setItem(row, COL_UOUT, self._editable_item(f"{value * 1000:.1f}"))
+        self._safe_recalculate()
+
+    def _editable_item(self, text):
+        from PyQt6.QtWidgets import QTableWidgetItem
+        return QTableWidgetItem(str(text))
 
     def _do_recalculate(self):
         usm_list = []

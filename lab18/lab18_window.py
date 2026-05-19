@@ -14,7 +14,7 @@ from lab18.sub183_window import Sub183Window
 from lab18.sub184_window import Sub184Window
 
 _LAB_PREFIX = "lab18_"
-_LAB_TITLE  = "Лаб. 18 — Инвертирующий и неинвертирующий сумматор"
+_LAB_TITLE  = "Исследование инвертирующего и неинвертирующего сумматора"
 
 _SUB_CLASSES = {
     "182": Sub182Window,

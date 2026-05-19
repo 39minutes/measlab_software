@@ -45,7 +45,7 @@ class Sub1653Window(Lab1617SubBase):
         self.r1_spin = QDoubleSpinBox()
         self.r1_spin.setRange(0.1, 200.0)
         self.r1_spin.setDecimals(1)
-        self.r1_spin.setValue(R1_DEFAULT)
+        self.r1_spin.setValue(1.0)
         self.r1_spin.valueChanged.connect(self._safe_recalculate)
         p_hl.addWidget(self.r1_spin)
 
@@ -54,7 +54,7 @@ class Sub1653Window(Lab1617SubBase):
         self.u1_spin.setRange(-20.0, 20.0)
         self.u1_spin.setDecimals(3)
         self.u1_spin.setSingleStep(0.1)
-        self.u1_spin.setValue(0.0)
+        self.u1_spin.setValue(1.2)
         self.u1_spin.valueChanged.connect(self._safe_recalculate)
         p_hl.addWidget(self.u1_spin)
 
@@ -63,7 +63,7 @@ class Sub1653Window(Lab1617SubBase):
         self.u2_spin.setRange(-20.0, 20.0)
         self.u2_spin.setDecimals(3)
         self.u2_spin.setSingleStep(0.1)
-        self.u2_spin.setValue(0.5)
+        self.u2_spin.setValue(1.7)
         self.u2_spin.valueChanged.connect(self._safe_recalculate)
         p_hl.addWidget(self.u2_spin)
         p_hl.addWidget(QLabel("В"))
@@ -145,10 +145,10 @@ class Sub1653Window(Lab1617SubBase):
             uout_theor = calc_uout_diff(u1, u2, r4, r1)
             self._set_calc(ROW_UOUT_THEOR, col, uout_theor)
 
-            # Ku экспериментальный
+            # Ku экспериментальный ← ИСПРАВЛЕНО
             uout_exp = self._get_float(ROW_UOUT_EXP, col)
             if uout_exp is not None and abs(denom) > 0.0001:
-                ku_exp = uout_exp / denom
+                ku_exp = 2 * uout_exp / denom          # ← умножение Uвых на 2
                 self._set_calc(ROW_KU_EXP, col, ku_exp)
             else:
                 self._set_calc(ROW_KU_EXP, col, "")
@@ -184,11 +184,11 @@ class Sub1653Window(Lab1617SubBase):
 
         for col in range(N_COLS):
             ku_theor.append(self._get_float(ROW_KU_THEOR, col) or 0.0)
+
             uout_exp = self._get_float(ROW_UOUT_EXP, col)
-            if uout_exp is not None:
-                denom = self.u2_spin.value() - self.u1_spin.value()
-                if abs(denom) > 0.0001:
-                    ku_exp.append(uout_exp / denom)
+            denom = self.u2_spin.value() - self.u1_spin.value()
+            if uout_exp is not None and abs(denom) > 0.0001:
+                ku_exp.append(2 * uout_exp / denom)   # ← умножение Uвых на 2
 
         fig, ax = plt.subplots(figsize=(9, 5))
         ax.plot(r4_vals, ku_theor, "b-o", label="Ки.т")

@@ -36,7 +36,7 @@ class Sub184Window(Lab18SubBase):
     def __init__(self, parent=None):
         super().__init__("lab18_18.4", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("18.4 — Неинвертирующий сумматор (синус + пост.)")
+        self.setWindowTitle("Неинвертирующий сумматор при входном напряжении в виде синусоидального сигнала")
         self.resize(760, 360)
 
         param_grp = QGroupBox("Параметры (R4 = 1 кОм фикс., f = 1000 Гц)")

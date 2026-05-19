@@ -9,6 +9,7 @@ from utils.tables.paste_table_widget import PasteTableWidget
 from utils.excel_timer_helper import update_timer_label, export_tables_to_excel
 from lab5.sub_base import Lab5SubBase
 from lab5.lab5_delegate import Lab5Delegate
+from lab5 import calculations_lab5 as calc
 
 COL_U_SAT_P = 0
 COL_U1_P    = 1
@@ -30,10 +31,10 @@ RH1 = 100
 
 
 class Sub131Window(Lab5SubBase):
-    def __init__(self, controller, parent=None):
-        super().__init__("lab5_1.3.1", controller, parent)
+    def __init__(self, parent=None):
+        super().__init__("lab5_1.3.1", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("1.3.1 — Передаточная характеристика ОУ")
+        self.setWindowTitle("Снятие передаточной характеристики ОУ на постоянном токе")
         self.resize(820, 260)
 
         self.table = PasteTableWidget(2, len(HEADERS))
@@ -87,7 +88,7 @@ class Sub131Window(Lab5SubBase):
             if u1m is not None:
                 self._set_calc(row, COL_UIN_M, f"{u1m * RH1 / R5 * 1e6:.2f}")
             if None not in (u_sat_p, u_sat_m, u1p, u1m):
-                k0, k0L = self.controller.compute_k0(u_sat_p, u_sat_m, u1p, u1m)
+                k0, k0L = calc.calc_k0(u_sat_p, u_sat_m, u1p, u1m)
                 self._set_calc(row, COL_K0,  f"{k0:.4g}")
                 self._set_calc(row, COL_K0L, f"{k0L:.2f}")
 

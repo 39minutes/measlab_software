@@ -1,26 +1,55 @@
 # lab5/sub_base.py
 import traceback
-from PyQt6.QtWidgets import QWidget, QTableWidgetItem
+from PyQt6.QtWidgets import (
+    QWidget, QTableWidgetItem, QSizePolicy
+)
 from PyQt6.QtCore import Qt, QTimer
-
 import utils.session_store as ss
+from utils.stand_controller import StandController
 
 
 class Lab5SubBase(QWidget):
     """
     Базовый класс всех подокон Лаб. 5.
+    Теперь с автоматическим расширением окна под таблицу.
     """
 
-    def __init__(self, session_key: str, controller, parent=None):
+    def __init__(self, session_key: str, parent=None):
         super().__init__(parent)
         self._session_key = session_key
-        self.controller   = controller
-        self._updating    = False
+        self.stand = StandController()
+        self._updating = False
 
-    # ── Форматирование чисел ─────────────────────────────────────────────
+        # ← НОВОЕ: таблица будет растягиваться и влиять на размер окна
+        self.table: 'PasteTableWidget' = None  # будет задаваться в дочерних классах
 
+    # ── Автоматическое расширение окна ───────────────────────────────
+    def _auto_resize_window(self):
+        """Подгоняет размер таблицы и всего окна под содержимое"""
+        if not hasattr(self, 'table') or self.table is None:
+            return
+
+        # Растягиваем столбцы и строки под данные
+        self.table.resizeColumnsToContents()
+        self.table.resizeRowsToContents()
+
+        # Даём layout'у пересчитаться
+        QTimer.singleShot(10, self._final_adjust)
+
+    def _final_adjust(self):
+        """Финальная подгонка размера окна"""
+        # Минимальный размер окна = размер таблицы + отступы + заголовок
+        hint = self.sizeHint()
+        # Добавляем небольшой запас (заголовок окна, кнопки и т.д.)
+        new_width = max(hint.width() + 40, 600)   # минимум 600 px по ширине
+        new_height = max(hint.height() + 80, 300) # минимум 300 px по высоте
+
+        self.resize(new_width, new_height)
+        # Можно сделать окно ещё больше, если данных очень много:
+        # self.setMinimumSize(new_width, new_height)
+
+    # ── Остальные методы (без изменений) ─────────────────────────────
     def _format_number(self, value, decimals: int = 2) -> str:
-        """Форматирует число до указанного количества знаков после запятой"""
         if value is None:
             return ""
         try:
@@ -28,17 +57,13 @@ class Lab5SubBase(QWidget):
         except (ValueError, TypeError):
             return str(value)
 
-    # ── Утилиты таблицы ───────────────────────────────────────────────────
-
     def _set_fixed(self, row: int, col: int, value):
-        """Устанавливает фиксированное значение с округлением до сотых"""
         text = self._format_number(value, decimals=2)
         item = QTableWidgetItem(text)
         item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
         self.table.setItem(row, col, item)
 
     def _set_calc(self, row: int, col: int, value):
-        """Устанавливает рассчитанное значение с округлением до сотых"""
         text = self._format_number(value, decimals=2)
         item = QTableWidgetItem(text)
         self.table.setItem(row, col, item)
@@ -55,14 +80,13 @@ class Lab5SubBase(QWidget):
         except ValueError:
             return None
 
-    # ── Пересчёт ──────────────────────────────────────────────────────────
-
     def _safe_recalculate(self):
         if self._updating:
             return
         self._updating = True
         try:
             self._do_recalculate()
+            self._auto_resize_window()          # ← НОВОЕ: пересчёт после изменений
         except Exception:
             traceback.print_exc()
         finally:
@@ -71,15 +95,16 @@ class Lab5SubBase(QWidget):
     def _do_recalculate(self):
         pass
 
-    # ── Сессия ────────────────────────────────────────────────────────────
-
     def _load_session(self):
-        """Загрузить сохранённые данные и запустить пересчёт."""
         ss.load_table(self._session_key, self.table)
         QTimer.singleShot(150, self._safe_recalculate)
 
     def closeEvent(self, event):
-        """Автосохранение при любом закрытии окна."""
         ss.save_table(self._session_key, self.table,
                       sheet_name=self.windowTitle())
         super().closeEvent(event)
+
+    # ← НОВОЕ: автоматически подгоняем размер при первом показе окна
+    def showEvent(self, event):
+        super().showEvent(event)
+        QTimer.singleShot(50, self._auto_resize_window)

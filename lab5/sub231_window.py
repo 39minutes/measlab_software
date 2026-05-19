@@ -12,7 +12,7 @@ from lab5.sub_base import Lab5SubBase
 from lab5.lab5_delegate import Lab5Delegate
 from utils.tables.read_voltage_button import ReadVoltageButton
 from lab5.const_lab5 import R4_VALUES_KOHM
-from lab5.calculations_lab5 import calc_ku_theor_nu, calc_ku_exp
+
 
 COL_R4  = 0
 COL_OUT = 1
@@ -22,8 +22,8 @@ HEADERS = ["R4, кОм", "Uвых, В", "Ku.теор", "Ku.эксп"]
 
 
 class Sub231Window(Lab5SubBase):
-    def __init__(self, controller, parent=None):
-        super().__init__("lab5_2.3.1", controller, parent)
+    def __init__(self, parent=None):
+        super().__init__("lab5_2.3.1", parent)
         self.start_time = datetime.now()
         self.setWindowTitle("2.3.1 — Зависимость Ku НУ от R4")
         self.resize(500, 300)
@@ -33,14 +33,15 @@ class Sub231Window(Lab5SubBase):
         self.table.setItemDelegate(Lab5Delegate(self._safe_recalculate, self))
 
         self.read_uout_btn = ReadVoltageButton(
-            self.controller.stand,
+            self.stand,
             self._set_current_uout,
             label_text="Uвых, В:"
         )
 
         for i, r4 in enumerate(R4_VALUES_KOHM):
             self._set_fixed(i, COL_R4, str(r4))
-            self._set_fixed(i, COL_KT, f"{calc_ku_theor_nu(r4):.3f}")
+            # ИСПРАВЛЕНИЕ: Ku.теор = 1 + R4 (R1 = 1 кОм)
+            self._set_fixed(i, COL_KT, f"{1 + r4:.3f}")
 
         uin_hl = QHBoxLayout()
         uin_hl.addWidget(QLabel("Uвх (фиксированное), В:"))
@@ -65,7 +66,7 @@ class Sub231Window(Lab5SubBase):
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(
             "<b>Таблица 5.7.</b> Зависимость Ku НУ от R4<br>"
-            "<small>K<sub>u.теор</sub> = 1 + R4/R1, R1 = 10 кОм</small>"
+            "<small>K<sub>u.теор</sub> = 1 + R4 (R1 = 1 кОм)</small>"
         ))
         layout.addLayout(uin_hl)
         layout.addWidget(self.table)
@@ -92,7 +93,7 @@ class Sub231Window(Lab5SubBase):
         for i in range(len(R4_VALUES_KOHM)):
             uout = self._get_float(i, COL_OUT)
             if uout is not None and uin != 0:
-                self._set_calc(i, COL_KE, f"{calc_ku_exp(uout, uin):.4f}")
+                self._set_calc(i, COL_KE, f"{uout / uin:.4f}")
 
     def _plot(self):
         r4_t, kt = [], []
@@ -109,11 +110,17 @@ class Sub231Window(Lab5SubBase):
             except (AttributeError, ValueError):
                 pass
         plt.figure(figsize=(9, 5))
-        if r4_t: plt.plot(r4_t, kt, "b-",   label="Ku.теор")
-        if r4_e: plt.plot(r4_e, ke, "ro--", label="Ku.эксп")
-        plt.xlabel("R4, кОм"); plt.ylabel("Ku")
+        if r4_t:
+            plt.plot(r4_t, kt, "b-", label="Ku.теор")
+        if r4_e:
+            plt.plot(r4_e, ke, "ro--", label="Ku.эксп")
+        plt.xlabel("R4, кОм")
+        plt.ylabel("Ku")
         plt.title("Зависимость Ku НУ от R4")
-        plt.legend(); plt.grid(True); plt.tight_layout(); plt.show()
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
 
     def _set_current_uout(self, value_v):
         row = self.table.currentRow()
