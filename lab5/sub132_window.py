@@ -30,7 +30,7 @@ class Sub132Window(Lab5SubBase):
     def __init__(self, parent=None):
         super().__init__("lab5_1.3.2", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("1.3.2 — Зависимость Umax(вых) от тока Iвых")
+        self.setWindowTitle("Зависимость Umax(вых) от тока Iвых")
         self.resize(860, 340)
 
         self.table = PasteTableWidget(3, len(H_HEADERS))

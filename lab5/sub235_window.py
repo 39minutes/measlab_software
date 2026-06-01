@@ -41,7 +41,7 @@ class Sub235Window(Lab5SubBase):
 
         for i, r4 in enumerate(R4_VALUES_KOHM):
             self._set_fixed(i, COL_R4, str(r4))
-            ku_theor = r4 + 1
+            ku_theor = r4
             self._set_fixed(i, COL_KT, f"{ku_theor:.3f}")
 
         btn_graph = QPushButton("График Ku = F(R4)")
@@ -64,8 +64,8 @@ class Sub235Window(Lab5SubBase):
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(
             "<b>2.3.5.</b> Исследование усилителя на переменном токе<br>"
-            "<small>K<sub>u.теор</sub> = 1 + R4/R1, R1 = 1 кОм<br>"
-            "K<sub>u.эксп</sub> = U<sub>вых</sub>(СКЗ) / U<sub>вх</sub>(СКЗ)</small>"
+            "R1 = 1 кОм<br>"
+            "K<sub>u.эксп</sub> = U<sub>вых</sub> / U<sub>вх</sub></small>"
         ))
         layout.addWidget(self.table)
         layout.addWidget(self.read_uout_btn)

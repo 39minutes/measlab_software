@@ -25,7 +25,7 @@ class Sub231Window(Lab5SubBase):
     def __init__(self, parent=None):
         super().__init__("lab5_2.3.1", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("2.3.1 — Зависимость Ku НУ от R4")
+        self.setWindowTitle("Зависимость коэффициента усиления НУ от сопротивления R4")
         self.resize(500, 300)
 
         self.table = PasteTableWidget(len(R4_VALUES_KOHM), len(HEADERS))
@@ -47,8 +47,9 @@ class Sub231Window(Lab5SubBase):
         uin_hl.addWidget(QLabel("Uвх (фиксированное), В:"))
         self.uin_spin = QDoubleSpinBox()
         self.uin_spin.setRange(-20.0, 20.0)
-        self.uin_spin.setDecimals(4)
+        self.uin_spin.setDecimals(3)
         self.uin_spin.setSingleStep(0.1)
+        self.uin_spin.setValue(1.2)
         self.uin_spin.valueChanged.connect(self._safe_recalculate)
         uin_hl.addWidget(self.uin_spin)
         uin_hl.addStretch()

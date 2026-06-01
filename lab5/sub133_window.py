@@ -23,7 +23,7 @@ class Sub133Window(Lab5SubBase):
     def __init__(self, parent=None):
         super().__init__("lab5_1.3.3", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("1.3.3 — Измерение значения напряжения смещения ОУ")
+        self.setWindowTitle("Измерение значения напряжения смещения операционного усилителя")
         self.resize(620, 280)
 
         self.table = PasteTableWidget(2, len(HEADERS))
@@ -60,8 +60,7 @@ class Sub133Window(Lab5SubBase):
 
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(
-            "<b>Таблица 5.5.</b> Напряжение смещения ОУ<br>"
-            "<small>U<sub>вых</sub> можно считывать кнопкой со стенда или вводить вручную.<br>"
+            "<b>Таблица</b> Напряжение смещения ОУ<br>"
             "U<sub>см</sub> вводится вручную. В последнем столбце — среднее значение U<sub>см</sub></small>"
         ))
         layout.addWidget(self.table)

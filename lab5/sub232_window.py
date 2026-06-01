@@ -26,7 +26,7 @@ class Sub232Window(Lab5SubBase):
     def __init__(self, parent=None):
         super().__init__("lab5_2.3.2", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("2.3.2 — Передаточная характеристика НУ")
+        self.setWindowTitle("Передаточная характеристика НУ")
         self.resize(620, 520)
 
         self.table = PasteTableWidget(N_ROWS, len(HEADERS))
@@ -63,8 +63,8 @@ class Sub232Window(Lab5SubBase):
 
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(
-            "<b>Таблица 5.8.</b> Передаточная характеристика НУ<br>"
-            "<small>K<sub>u.теор</sub> = 1 + R4/R1, R1 = 10 кОм</small>"
+            "<b>Таблица. </b> Передаточная характеристика НУ<br>"
+            "<small>K<sub>u.теор</sub> = 1 + R4/R1, R1 = 1 кОм</small>"
         ))
         layout.addLayout(r4_hl)
         layout.addWidget(self.table)

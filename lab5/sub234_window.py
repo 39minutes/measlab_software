@@ -28,7 +28,7 @@ class Sub234Window(Lab5SubBase):
     def __init__(self, parent=None):
         super().__init__("lab5_2.3.4", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("2.3.4 — Передаточная характеристика ИУ")
+        self.setWindowTitle("Передаточная характеристика ИУ")
         self.resize(650, 520)
 
         self.table = PasteTableWidget(N_ROWS, len(HEADERS))

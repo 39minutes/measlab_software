@@ -100,6 +100,18 @@ class Lab5SubBase(QWidget):
         QTimer.singleShot(150, self._safe_recalculate)
 
     def closeEvent(self, event):
+        # ←←← НОВОЕ: закрываем COM-порт при закрытии подокна
+        if (hasattr(self, 'stand') and
+                self.stand and
+                self.stand.ser and
+                getattr(self.stand.ser, 'is_open', False)):
+            try:
+                self.stand.ser.close()
+                self.stand.ser = None  # чтобы следующий StandController мог открыть заново
+            except Exception:
+                pass  # не ломаем закрытие окна, если что-то пошло не так
+
+        # Сохраняем данные таблицы (как было раньше)
         ss.save_table(self._session_key, self.table,
                       sheet_name=self.windowTitle())
         super().closeEvent(event)

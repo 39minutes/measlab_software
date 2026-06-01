@@ -34,7 +34,7 @@ class Sub1653Window(Lab1617SubBase):
     def __init__(self, parent=None):
         super().__init__("lab1617_16.5.3", parent)
         self.start_time = datetime.now()
-        self.setWindowTitle("16.5.3 — Дифференциальный усилитель")
+        self.setWindowTitle("Исследование дифференциального усилителя")
         self.resize(920, 480)
 
         # Параметры схемы
