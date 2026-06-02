@@ -1,5 +1,7 @@
 import struct
 import serial
+from serial.tools import list_ports
+from PyQt6.QtCore import QSettings
 from utils.data.measurement import Measurement
 
 
@@ -8,15 +10,37 @@ def parse_float(data_bytes):
 
 
 class StandController:
-    def __init__(self):
+    def __init__(self, port: str | None = None):
         self.ser = None
+        if port is None:
+            settings = QSettings("MeasLab", "StandController")
+            self.port = settings.value("com_port", "COM3")
+        else:
+            self.port = port
+
+    def _get_settings(self):
+        return QSettings("MeasLab", "StandController")
+
+    def set_port(self, new_port: str):
+        """Меняет порт и сохраняет в настройки"""
+        if self.ser and self.ser.is_open:
+            try:
+                self.ser.close()
+            except Exception:
+                pass
+            self.ser = None
+
+        self.port = new_port
+        settings = self._get_settings()
+        settings.setValue("com_port", new_port)
 
     def _ensure_connection(self):
         if self.ser and self.ser.is_open:
             return True
+
         try:
             self.ser = serial.Serial(
-                port='COM3',
+                port=self.port,
                 baudrate=115200,
                 bytesize=serial.EIGHTBITS,
                 parity=serial.PARITY_NONE,
@@ -51,7 +75,7 @@ class StandController:
             else:
                 u_vkh = 0.0
 
-            return Measurement(u_vkh, abs(u_vyk), i_vyk * 1000)  # в мА
+            return Measurement(u_vkh, u_vyk, i_vyk * 1000)  # в мА
 
         except serial.SerialException as e:
             try:
@@ -63,6 +87,6 @@ class StandController:
 
     def send_bytes(self, data: bytes):
         if not self._ensure_connection():
-            raise RuntimeError(f"Не удалось подключиться к COM-порту {'COM3'}")
+            raise RuntimeError(f"Не удалось подключиться к COM-порту {'self.port'}")
         self.ser.write(data)
         self.ser.read(32)
